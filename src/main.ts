@@ -10,8 +10,9 @@ header.innerHTML = APP_NAME;
 header.style.fontSize = "50px";
 app.append(header);
 
-const canvas = document.createElement("canvas");
+const canvas = document.createElement('canvas');
 canvas.width = 256;
 canvas.height = 256;
-app.append(canvas);
+canvas.id = `canvas`;
+app.appendChild(canvas);
 

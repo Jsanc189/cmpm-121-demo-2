@@ -32,8 +32,9 @@ body {
 
 #canvas {
   color: #ffffff;
-  border: 4px solid #92ff74;
+  border: 4px solid #000000;
   border-radius: 5px;
+  box-shadow: 1px 1px 10px #544d6a;
 }
 
 h1 {
@@ -100,8 +101,4 @@ button:focus-visible {
   }
 }
 
-#canvas {
-  color: #ffffff;
-  border: 4px solid #92ff74;
-  border-radius: 5px;
-}
+
