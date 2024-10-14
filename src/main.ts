@@ -1,7 +1,17 @@
 import "./style.css";
 
-const APP_NAME = "Did you turn it off and turn it back on again?";
+const APP_NAME = "DecoDoodle";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 
-document.title = APP_NAME;
-app.innerHTML = APP_NAME;
+document.title = APP_NAME
+
+const header = document.createElement("h1");
+header.innerHTML = APP_NAME;
+header.style.fontSize = "50px";
+app.append(header);
+
+const canvas = document.createElement("canvas");
+canvas.width = 256;
+canvas.height = 256;
+app.append(canvas);
+

@@ -30,6 +30,12 @@ body {
   min-height: 100vh;
 }
 
+#canvas {
+  color: #ffffff;
+  border: 4px solid #92ff74;
+  border-radius: 5px;
+}
+
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
@@ -92,4 +98,10 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+#canvas {
+  color: #ffffff;
+  border: 4px solid #92ff74;
+  border-radius: 5px;
 }
