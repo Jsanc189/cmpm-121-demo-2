@@ -23,7 +23,7 @@ app.appendChild(div);
 
 const drawingContext = canvas.getContext('2d');
 
-const lines = [];
+const lines: Array<number> = [];
 let currentLine = null;
 
 
@@ -35,7 +35,9 @@ canvas.addEventListener('mousedown', (e) => {
   cursor.y = e.offsetY;
 
   currentLine = [];
+  console.log(currentLine);
   lines.push(currentLine);
+  
 
   canvas.dispatchEvent(drawingChangedEvent);
 });
