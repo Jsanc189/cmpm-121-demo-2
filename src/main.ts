@@ -24,7 +24,10 @@ app.appendChild(div);
 const drawingContext = canvas.getContext('2d');
 
 const lines: Array<number> = [];
+const redoLines: Array<number> = [];
 let currentLine = null;
+
+
 
 
 const cursor = { active: false, x: 0, y: 0 };
@@ -89,3 +92,23 @@ clearButton.addEventListener('click', () => {
   clearCanvas();
 });
 app.appendChild(clearButton);
+
+const undoButton = document.createElement('button');
+undoButton.innerHTML = 'Undo';
+undoButton.addEventListener('click', () => {
+  if (lines.length > 0) {
+    redoLines.push(lines.pop());
+    canvas.dispatchEvent(drawingChangedEvent);
+  }
+});
+app.appendChild(undoButton);
+
+const redoButton = document.createElement('button');
+redoButton.innerHTML = 'Redo';
+redoButton.addEventListener('click', () => {
+  if (redoLines.length > 0) {
+    lines.push(redoLines.pop());
+    canvas.dispatchEvent(drawingChangedEvent);
+  }
+});
+app.appendChild(redoButton);
