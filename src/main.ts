@@ -37,7 +37,7 @@ canvas.addEventListener('mousedown', (e) => {
   currentLine = [];
   lines.push(currentLine);
 
-  redraw();  
+  canvas.dispatchEvent(drawingChangedEvent);
 });
 
 canvas.addEventListener('mousemove', (e) => {
@@ -47,17 +47,19 @@ canvas.addEventListener('mousemove', (e) => {
        currentLine.push({ x: cursor.x, y: cursor.y });
      }
 
-     redraw();
+     canvas.dispatchEvent(drawingChangedEvent);
 });
 
 canvas.addEventListener('mouseup', () => {
   cursor.active = false;
   currentLine = null;
 
-  redraw();
+  canvas.dispatchEvent(drawingChangedEvent);
 });
 
-function redraw() {
+const drawingChangedEvent = new Event('drawing-changed');
+
+canvas.addEventListener('drawing-changed', () => {
     drawingContext.clearRect(0, 0, canvas.width, canvas.height);
     for (const line of lines) {
         if (line.length > 1) {
@@ -70,12 +72,18 @@ function redraw() {
             drawingContext.stroke();
         }
     }
+});
+
+
+function clearCanvas() {
+    lines.splice(0, lines.length);
+    canvas.dispatchEvent(drawingChangedEvent);
 }
+
 
 const clearButton = document.createElement('button');
 clearButton.innerHTML = 'Clear';
 clearButton.addEventListener('click', () => {
-  lines.splice(0, lines.length);
-  redraw();
+  clearCanvas();
 });
 app.appendChild(clearButton);
