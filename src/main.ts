@@ -79,36 +79,46 @@ canvas.addEventListener('drawing-changed', () => {
     }
 });
 
+interface buttons {
+    label: string;
+    onClick: () => void;
+}
+
+const buttonTypes: Array<buttons> = [
+    { label: 'Clear', onClick: clearCanvas },
+    { label: 'Undo', onClick: undo},
+    { label: 'Redo', onClick: redo}
+];
+
+function createButton(buttonType: buttons) {
+    const button = document.createElement('button');
+    button.innerHTML = buttonType.label;
+    button.addEventListener('click', buttonType.onClick);
+    app.appendChild(button);
+    return button;
+}
+
+for (const buttonType of buttonTypes) {
+    createButton(buttonType);
+}
 
 function clearCanvas() {
     lines.splice(0, lines.length);
     canvas.dispatchEvent(drawingChangedEvent);
 }
 
-
-const clearButton = document.createElement('button');
-clearButton.innerHTML = 'Clear';
-clearButton.addEventListener('click', () => {
-  clearCanvas();
-});
-app.appendChild(clearButton);
-
-const undoButton = document.createElement('button');
-undoButton.innerHTML = 'Undo';
-undoButton.addEventListener('click', () => {
-  if (lines.length > 0) {
-    redoLines.push(lines.pop());
+function undo() {
+    if (lines.length > 0) {
+        redoLines.push(lines.pop());
+        canvas.dispatchEvent(drawingChangedEvent);
+    }
     canvas.dispatchEvent(drawingChangedEvent);
-  }
-});
-app.appendChild(undoButton);
+}
 
-const redoButton = document.createElement('button');
-redoButton.innerHTML = 'Redo';
-redoButton.addEventListener('click', () => {
-  if (redoLines.length > 0) {
-    lines.push(redoLines.pop());
+function redo() {
+    if (redoLines.length > 0) {
+        lines.push(redoLines.pop());
+        canvas.dispatchEvent(drawingChangedEvent);
+    }
     canvas.dispatchEvent(drawingChangedEvent);
-  }
-});
-app.appendChild(redoButton);
+}
