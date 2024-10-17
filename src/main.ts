@@ -23,33 +23,53 @@ app.appendChild(div);
 
 const drawingContext = canvas.getContext('2d');
 
-const lines: Array<number> = [];
-const redoLines: Array<number> = [];
-let currentLine = null;
-
-
-
+const lines: Array<Line> = [];
+const redoLines: Array<Line> = [];
+let currentLine: Line | null = null;
 
 const cursor = { active: false, x: 0, y: 0 };
+
+interface Displayable {
+    display(context: CanvasRenderingContext2D): void;
+};
+
+class Line implements Displayable {
+    public points: Array<{ x: number; y: number }>;
+
+    constructor() {
+        this.points = [];
+    }
+
+    display(context: CanvasRenderingContext2D): void {
+      if (this.points.length > 1) {
+        context.beginPath();
+        const { x, y } = this.points[0];
+        context.moveTo(x, y);
+        for (const { x, y } of this.points) {
+          context.lineTo(x, y);
+        }
+        context.stroke();
+      }
+    }
+} 
 
 canvas.addEventListener('mousedown', (e) => {
   cursor.active = true;
   cursor.x = e.offsetX;
   cursor.y = e.offsetY;
 
-  currentLine = [];
-  console.log(currentLine);
+  currentLine = new Line();
+  currentLine.points.push({ x: cursor.x, y: cursor.y });
   lines.push(currentLine);
   
-
   canvas.dispatchEvent(drawingChangedEvent);
 });
 
 canvas.addEventListener('mousemove', (e) => {
-    if (cursor.active) {
+    if (cursor.active && currentLine) {
        cursor.x = e.offsetX;
        cursor.y = e.offsetY;
-       currentLine.push({ x: cursor.x, y: cursor.y });
+       currentLine.points.push({ x: cursor.x, y: cursor.y });
      }
 
      canvas.dispatchEvent(drawingChangedEvent);
@@ -67,15 +87,7 @@ const drawingChangedEvent = new Event('drawing-changed');
 canvas.addEventListener('drawing-changed', () => {
     drawingContext.clearRect(0, 0, canvas.width, canvas.height);
     for (const line of lines) {
-        if (line.length > 1) {
-            drawingContext.beginPath();
-            const { x, y } = line[0];
-            drawingContext.moveTo(x, y);
-            for (const { x, y } of line) {
-                drawingContext.lineTo(x, y);
-            }
-            drawingContext.stroke();
-        }
+        line.display(drawingContext);
     }
 });
 
@@ -104,21 +116,23 @@ for (const buttonType of buttonTypes) {
 
 function clearCanvas() {
     lines.splice(0, lines.length);
+    redoLines.splice(0, redoLines.length);
     canvas.dispatchEvent(drawingChangedEvent);
 }
 
 function undo() {
     if (lines.length > 0) {
-        redoLines.push(lines.pop());
+        const lastLine = lines.pop()!;
+        redoLines.push(lastLine);
         canvas.dispatchEvent(drawingChangedEvent);
     }
-    canvas.dispatchEvent(drawingChangedEvent);
 }
 
 function redo() {
     if (redoLines.length > 0) {
-        lines.push(redoLines.pop());
+        const lineToRedo = redoLines.pop()!;
+        lines.push(lineToRedo);
         canvas.dispatchEvent(drawingChangedEvent);
     }
-    canvas.dispatchEvent(drawingChangedEvent);
+
 }
