@@ -21,7 +21,7 @@ const div = document.createElement('div');
 div.style.height = '20px';
 app.appendChild(div);
 
-const drawingContext = canvas.getContext('2d');
+const drawingContext: CanvasRenderingContext2D | null = canvas.getContext('2d');
 
 const lines: Array<Line> = [];
 const redoLines: Array<Line> = [];
