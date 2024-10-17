@@ -33,15 +33,20 @@ interface Displayable {
     display(context: CanvasRenderingContext2D): void;
 };
 
+let lineThickness:number = 3;
+
 class Line implements Displayable {
     public points: Array<{ x: number; y: number }>;
-
+    public thickness:number;
+    
     constructor() {
         this.points = [];
+        this.thickness = lineThickness;
     }
 
     display(context: CanvasRenderingContext2D): void {
       if (this.points.length > 1) {
+        context.lineWidth = this.thickness;
         context.beginPath();
         const { x, y } = this.points[0];
         context.moveTo(x, y);
@@ -99,7 +104,9 @@ interface buttons {
 const buttonTypes: Array<buttons> = [
     { label: 'Clear', onClick: clearCanvas },
     { label: 'Undo', onClick: undo},
-    { label: 'Redo', onClick: redo}
+    { label: 'Redo', onClick: redo},
+    { label: 'Thin', onClick: thin},
+    { label: 'Thick', onClick: thick}
 ];
 
 function createButton(buttonType: buttons) {
@@ -136,3 +143,14 @@ function redo() {
     }
 
 }
+
+function thin() {
+    if (lineThickness > 1){
+        lineThickness -= 1;
+    }
+}
+
+function thick() {
+    lineThickness += 1;
+}
+
