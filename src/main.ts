@@ -58,7 +58,6 @@ class Line implements Displayable {
     }
 } 
 
-let cursorCommand:cursorShape | null = null;
 
 class cursorShape {  
     public shape:string;
@@ -83,6 +82,9 @@ class cursorShape {
 
 }
 
+let cursorChangedShape:boolean = false;
+let cursorCommand:cursorShape = new cursorShape(' ', 0, 0);
+
 canvas.addEventListener('mousedown', (e) => {
   cursor.active = true;
   cursor.x = e.offsetX;
@@ -100,7 +102,7 @@ canvas.addEventListener('mouseenter', (e) => {
     canvas.dispatchEvent(drawingChangedEvent);
 });
 
-canvas.addEventListener('mouseout', (e) => {
+canvas.addEventListener('mouseout', () => {
     canvas.style.cursor = 'default';
     cursorCommand = new cursorShape(' ', 0, 0);
     canvas.dispatchEvent(drawingChangedEvent);
@@ -109,13 +111,16 @@ canvas.addEventListener('mouseout', (e) => {
 canvas.addEventListener('mousemove', (e) => {
     const cursorX = e.offsetX;
     const cursorY = e.offsetY;
-    cursorCommand = new cursorShape('.', cursorX, cursorY);
+    if (cursorChangedShape) {
+        cursorCommand = new cursorShape(cursorCommand.shape, cursorX, cursorY);
+    } else {
+        cursorCommand = new cursorShape('.', cursorX, cursorY);
+    }
+
     canvas.dispatchEvent(drawingChangedEvent);
 
     if (cursor.active && currentLine) {
-       cursor.x = e.offsetX;
-       cursor.y = e.offsetY;
-       currentLine.points.push({ x: cursor.x, y: cursor.y });
+       currentLine.points.push({ x: cursorX, y: cursorY });
        canvas.dispatchEvent(drawingChangedEvent);
     }
 
@@ -152,8 +157,16 @@ const buttonTypes: Array<buttons> = [
     { label: 'Undo', onClick: undo},
     { label: 'Redo', onClick: redo},
     { label: 'Thin', onClick: thin},
-    { label: 'Thick', onClick: thick}
+    { label: 'Thick', onClick: thick},
+    { label: '👻', onClick: toolMoved('👻', true)},
 ];
+
+function toolMoved(shape:string, changeShape:boolean) {
+   return function() {    
+    cursorChangedShape = changeShape;
+    cursorCommand.shape = shape;
+   }
+}
 
 function createButton(buttonType: buttons) {
     const button = document.createElement('button');
