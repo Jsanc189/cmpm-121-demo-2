@@ -97,10 +97,12 @@ canvas.addEventListener('mousedown', (e) => {
 
 canvas.addEventListener('mouseenter', (e) => {
     canvas.style.cursor = 'none';
+    canvas.dispatchEvent(drawingChangedEvent);
 });
 
 canvas.addEventListener('mouseout', (e) => {
     canvas.style.cursor = 'default';
+    cursorCommand = new cursorShape(' ', 0, 0);
     canvas.dispatchEvent(drawingChangedEvent);
 })
 
