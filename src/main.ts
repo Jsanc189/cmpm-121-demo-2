@@ -83,12 +83,19 @@ class cursorShape {
 }
 
 let cursorChangedShape:boolean = false;
-let cursorCommand:cursorShape = new cursorShape(' ', 0, 0);
+let cursorCommand:cursorShape = new cursorShape('.', 0, 0);
+let cursorHolder:cursorShape = new cursorShape(' ', 0, 0);
 
 canvas.addEventListener('mousedown', (e) => {
   cursor.active = true;
   cursor.x = e.offsetX;
   cursor.y = e.offsetY;
+
+  if (cursorCommand.shape != '.') {
+    cursorHolder = cursorCommand;
+    cursorCommand.shape = '.';
+
+  }
 
   currentLine = new Line();
   currentLine.points.push({ x: cursor.x, y: cursor.y });
@@ -96,6 +103,16 @@ canvas.addEventListener('mousedown', (e) => {
   
   canvas.dispatchEvent(drawingChangedEvent);
 });
+
+canvas.addEventListener('mouseup', () => {
+    cursor.active = false;
+    currentLine = null;
+    if (cursorChangedShape == true) {
+        cursorCommand.shape = cursorHolder.shape;
+    }
+  
+    canvas.dispatchEvent(drawingChangedEvent);
+  });
 
 canvas.addEventListener('mouseenter', (e) => {
     canvas.style.cursor = 'none';
@@ -117,22 +134,13 @@ canvas.addEventListener('mousemove', (e) => {
         cursorCommand = new cursorShape('.', cursorX, cursorY);
     }
 
-    canvas.dispatchEvent(drawingChangedEvent);
-
     if (cursor.active && currentLine) {
        currentLine.points.push({ x: cursorX, y: cursorY });
-       canvas.dispatchEvent(drawingChangedEvent);
     }
-
+    canvas.dispatchEvent(drawingChangedEvent);
      
 });
 
-canvas.addEventListener('mouseup', () => {
-  cursor.active = false;
-  currentLine = null;
-
-  canvas.dispatchEvent(drawingChangedEvent);
-});
 
 const drawingChangedEvent = new Event('drawing-changed');
 
@@ -158,20 +166,21 @@ const buttonTypes: Array<buttons> = [
     { label: 'Redo', onClick: redo},
     { label: 'Thin', onClick: thin},
     { label: 'Thick', onClick: thick},
-    { label: '👻', onClick: toolMoved('👻', true)},
-    {label: '🐈‍⬛', onClick: toolMoved('🐈‍⬛', true)},
-    {label:'🌕', onClick: toolMoved('🌕', true)},
+    { label: '👻', onClick: toolMoved('👻')},
+    {label: '🐈‍⬛', onClick: toolMoved('🐈‍⬛')},
+    {label:'🌕', onClick: toolMoved('🌕')},
 ];
 
-function toolMoved(shape:string, changeShape:boolean) {
+function toolMoved(shape:string) {
    return function() {
         if (cursorCommand.shape === shape) {
             cursorChangedShape = false;
             cursorCommand.shape = '.';
         }else{    
-            cursorChangedShape = changeShape;
+            cursorChangedShape = true;
             cursorCommand.shape = shape;
         }
+        canvas.dispatchEvent(drawingChangedEvent);
     }
 }
 
