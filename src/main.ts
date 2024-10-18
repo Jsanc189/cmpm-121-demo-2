@@ -159,13 +159,20 @@ const buttonTypes: Array<buttons> = [
     { label: 'Thin', onClick: thin},
     { label: 'Thick', onClick: thick},
     { label: '👻', onClick: toolMoved('👻', true)},
+    {label: '🐈‍⬛', onClick: toolMoved('🐈‍⬛', true)},
+    {label:'🌕', onClick: toolMoved('🌕', true)},
 ];
 
 function toolMoved(shape:string, changeShape:boolean) {
-   return function() {    
-    cursorChangedShape = changeShape;
-    cursorCommand.shape = shape;
-   }
+   return function() {
+        if (cursorCommand.shape === shape) {
+            cursorChangedShape = false;
+            cursorCommand.shape = '.';
+        }else{    
+            cursorChangedShape = changeShape;
+            cursorCommand.shape = shape;
+        }
+    }
 }
 
 function createButton(buttonType: buttons) {
