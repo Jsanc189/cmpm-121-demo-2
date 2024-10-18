@@ -58,6 +58,31 @@ class Line implements Displayable {
     }
 } 
 
+let cursorCommand:cursorShape | null = null;
+
+class cursorShape {  
+    public shape:string;
+    public thickness:number;
+    public x:number;
+    public y:number;
+
+    constructor(shape: string, x:number, y:number) {
+        this.shape = shape;
+        this.thickness = lineThickness;
+        this.x = x;
+        this.y = y;
+    }
+
+    execute() {
+        if (drawingContext) {
+            drawingContext.font = (this.thickness*10) + "px Arial";
+            drawingContext.fillStyle = "black";
+            drawingContext.fillText(this.shape, this.x-4, this.y)
+        }
+    }
+
+}
+
 canvas.addEventListener('mousedown', (e) => {
   cursor.active = true;
   cursor.x = e.offsetX;
@@ -70,14 +95,29 @@ canvas.addEventListener('mousedown', (e) => {
   canvas.dispatchEvent(drawingChangedEvent);
 });
 
+canvas.addEventListener('mouseenter', (e) => {
+    canvas.style.cursor = 'none';
+});
+
+canvas.addEventListener('mouseout', (e) => {
+    canvas.style.cursor = 'default';
+    canvas.dispatchEvent(drawingChangedEvent);
+})
+
 canvas.addEventListener('mousemove', (e) => {
+    const cursorX = e.offsetX;
+    const cursorY = e.offsetY;
+    cursorCommand = new cursorShape('.', cursorX, cursorY);
+    canvas.dispatchEvent(drawingChangedEvent);
+
     if (cursor.active && currentLine) {
        cursor.x = e.offsetX;
        cursor.y = e.offsetY;
        currentLine.points.push({ x: cursor.x, y: cursor.y });
-     }
+       canvas.dispatchEvent(drawingChangedEvent);
+    }
 
-     canvas.dispatchEvent(drawingChangedEvent);
+     
 });
 
 canvas.addEventListener('mouseup', () => {
@@ -93,6 +133,10 @@ canvas.addEventListener('drawing-changed', () => {
     drawingContext.clearRect(0, 0, canvas.width, canvas.height);
     for (const line of lines) {
         line.display(drawingContext);
+    }
+
+    if (cursorCommand) {
+        cursorCommand.execute();
     }
 });
 
