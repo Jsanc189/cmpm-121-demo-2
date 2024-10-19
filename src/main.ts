@@ -102,6 +102,7 @@ const buttonTypes: Array<buttons> = [
     { label: 'Redo', onClick: redo},
     { label: 'Thin', onClick: thin},
     { label: 'Thick', onClick: thick},
+    { label: 'Custom Sticker', onClick: customSticker},
 ];
 
 
@@ -118,7 +119,7 @@ for (const buttonType of buttonTypes) {
     createButton(buttonType);
 }
 
-const emojis: Array<string> = ['👻', '🐈‍⬛', '🌕'];
+let emojis: Array<string> = ['👻', '🐈‍⬛', '🌕'];
 
 const stickerButtonTypes = emojis.map(emoji => ({
     label: emoji,
@@ -127,10 +128,7 @@ const stickerButtonTypes = emojis.map(emoji => ({
 
 
 stickerButtonTypes.forEach(buttonType => {
-    const button = document.createElement('button');
-    button.innerHTML = buttonType.label;
-    button.addEventListener('click', buttonType.onClick);
-    app.appendChild(button);
+    createButton(buttonType);
 });
 
 function toolMoved(shape: string) {
@@ -228,5 +226,11 @@ function thin() {
 
 function thick() {
     lineThickness += 1;
+}
+
+function customSticker() {
+    let text:string = prompt("Custom sticker text");
+    emojis.push(text);
+    createButton({label: text, onClick: ()=> toolMoved})  
 }
 
