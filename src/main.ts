@@ -27,7 +27,11 @@ const lines: Array<Line> = [];
 const redoLines: Array<Line> = [];
 let currentLine: Line | null = null;
 
-const cursor = { active: false, x: 0, y: 0 };
+const startingX:number = 0;
+const startingY:number = 0;
+const sizeFactor:number = 10
+
+const cursor = { active: false, x: startingX, y: startingY };
 
 interface Displayable {
     display(context: CanvasRenderingContext2D): void;
@@ -53,7 +57,7 @@ class Line implements Displayable {
         const { x, y } = this.points[0];
         context.moveTo(x, y);
         for (const { x, y } of this.points) {
-            context.font = (this.thickness*10) + "px Arial";
+            context.font = (this.thickness * sizeFactor) + "px Arial";
           context.fillText(this.character, x-4, y);
         }
         context.stroke();
@@ -82,7 +86,7 @@ class cursorShape implements Command{
 
     execute(): void {
         if (drawingContext) {
-            drawingContext.font = (this.thickness*10) + "px Arial";
+            drawingContext.font = (this.thickness * sizeFactor) + "px Arial";
             drawingContext.fillStyle = "black";
             drawingContext.fillText(this.shape, this.x-4, this.y)
         }
@@ -100,10 +104,12 @@ const buttonTypes: Array<buttons> = [
     { label: 'Clear', onClick: clearCanvas },
     { label: 'Undo', onClick: undo},
     { label: 'Redo', onClick: redo},
+    { label: 'Marker', onClick: canvasMarker},
     { label: 'Thin', onClick: thin},
     { label: 'Thick', onClick: thick},
-    { label: 'Custom Sticker', onClick: customSticker},
     { label: 'Export', onClick: exportCanvas},
+    { label: 'Custom Sticker', onClick: customSticker},
+
 ];
 
 
@@ -120,7 +126,7 @@ for (const buttonType of buttonTypes) {
     createButton(buttonType);
 }
 
-let emojis: Array<string> = ['👻', '🐈‍⬛', '🌕'];
+const emojis: Array<string> = ['👻', '🐈‍⬛', '🌕'];
 
 const stickerButtonTypes = emojis.map(emoji => ({
     label: emoji,
@@ -136,7 +142,7 @@ function toolMoved(shape: string) {
     cursorCommand.shape = shape;
  }
 
-let cursorCommand:cursorShape = new cursorShape('.', 0, 0);
+let cursorCommand:cursorShape = new cursorShape('.', startingX, startingY);
 
 canvas.addEventListener('mousedown', (e) => {
   cursor.active = true;
@@ -189,7 +195,7 @@ const drawingChangedEvent = new Event('drawing-changed');
 
 canvas.addEventListener('drawing-changed', () => {
     if (drawingContext) {
-        drawingContext.clearRect(0, 0, canvas.width, canvas.height);
+        drawingContext.clearRect(startingX, startingY, canvas.width, canvas.height);
         lines.forEach(line => line.display(drawingContext));
         cursorCommand.execute();
     }
@@ -219,6 +225,10 @@ function redo() {
 
 }
 
+function canvasMarker() {
+    cursorCommand.shape = '.';
+}
+
 function thin() {
     if (lineThickness > 1){
         lineThickness -= 1;
@@ -230,7 +240,7 @@ function thick() {
 }
 
 function customSticker() {
-    let text:string = prompt("Custom sticker text");
+    const text:string = prompt("Custom sticker text");
     emojis.push(text);
     createButton({label: text, onClick: ()=> toolMoved(text)})  
 }
@@ -240,9 +250,9 @@ function exportCanvas() {
     exportCanvas.width = 1024;
     exportCanvas.height = 1024;
     
-    let exportCanvasContext = exportCanvas.getContext('2d');
+    const exportCanvasContext = exportCanvas.getContext('2d');
     if (exportCanvasContext && drawingContext) {
-        exportCanvasContext.drawImage(canvas, 0, 0, exportCanvas.width, exportCanvas.height);
+        exportCanvasContext.drawImage(canvas, startingX, startingY, exportCanvas.width, exportCanvas.height);
         exportCanvasContext.scale(4,4);
     }
 
