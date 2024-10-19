@@ -38,42 +38,51 @@ let lineThickness:number = 3;
 class Line implements Displayable {
     public points: Array<{ x: number; y: number }>;
     public thickness:number;
+    public character:string;
     
     constructor() {
         this.points = [];
         this.thickness = lineThickness;
+        this.character = cursorCommand.shape;
     }
 
     display(context: CanvasRenderingContext2D): void {
-      if (this.points.length > 1) {
+      if (this.points.length >= 1) {
         context.lineWidth = this.thickness;
         context.beginPath();
         const { x, y } = this.points[0];
         context.moveTo(x, y);
         for (const { x, y } of this.points) {
-          context.lineTo(x, y);
+            context.font = (this.thickness*10) + "px Arial";
+          context.fillText(this.character, x-4, y);
         }
         context.stroke();
       }
     }
 } 
 
+interface Command {
+    execute(): void;
+}
 
-class cursorShape {  
+class cursorShape implements Command{  
+    private context: CanvasRenderingContext2D | null;
     public shape:string;
     public thickness:number;
     public x:number;
     public y:number;
 
     constructor(shape: string, x:number, y:number) {
+        this.context = drawingContext;
         this.shape = shape;
         this.thickness = lineThickness;
         this.x = x;
         this.y = y;
     }
 
-    execute() {
+    execute(): void {
         if (drawingContext) {
+            //console.log(`${this.shape} is the shape in execute`);
             drawingContext.font = (this.thickness*10) + "px Arial";
             drawingContext.fillStyle = "black";
             drawingContext.fillText(this.shape, this.x-4, this.y)
@@ -82,24 +91,68 @@ class cursorShape {
 
 }
 
-let cursorChangedShape:boolean = false;
+
+interface buttons {
+    label: string;
+    onClick: () => void;
+}
+
+const buttonTypes: Array<buttons> = [
+    { label: 'Clear', onClick: clearCanvas },
+    { label: 'Undo', onClick: undo},
+    { label: 'Redo', onClick: redo},
+    { label: 'Thin', onClick: thin},
+    { label: 'Thick', onClick: thick},
+];
+
+
+
+function createButton(buttonType: buttons) {
+    const button = document.createElement('button');
+    button.innerHTML = buttonType.label;
+    button.addEventListener('click', buttonType.onClick);
+    app.appendChild(button);
+    return button;
+}
+
+for (const buttonType of buttonTypes) {
+    createButton(buttonType);
+}
+
+const emojis: Array<string> = ['👻', '🐈‍⬛', '🌕'];
+
+const stickerButtonTypes = emojis.map(emoji => ({
+    label: emoji,
+     onClick: () => toolMoved(emoji),
+}))
+
+
+stickerButtonTypes.forEach(buttonType => {
+    const button = document.createElement('button');
+    button.innerHTML = buttonType.label;
+    button.addEventListener('click', buttonType.onClick);
+    app.appendChild(button);
+});
+
+function toolMoved(shape: string) {
+    console.log(`${shape} is the shape in toolMoved`);
+    cursorCommand.shape = shape;
+    console.log(`${cursorCommand.shape} is the ACTUAL shape in toolMoved`);
+ }
+
 let cursorCommand:cursorShape = new cursorShape('.', 0, 0);
-let cursorHolder:cursorShape = new cursorShape(' ', 0, 0);
 
 canvas.addEventListener('mousedown', (e) => {
   cursor.active = true;
   cursor.x = e.offsetX;
   cursor.y = e.offsetY;
+    console.log(cursorCommand.shape);
 
-  if (cursorCommand.shape != '.') {
-    cursorHolder = cursorCommand;
-    cursorCommand.shape = '.';
-
-  }
-
-  currentLine = new Line();
-  currentLine.points.push({ x: cursor.x, y: cursor.y });
-  lines.push(currentLine);
+    if (cursor.active && cursorCommand.shape != ' ') {
+        currentLine = new Line();
+        currentLine.points.push({ x: cursor.x, y: cursor.y });
+        lines.push(currentLine);
+    }
   
   canvas.dispatchEvent(drawingChangedEvent);
 });
@@ -107,14 +160,13 @@ canvas.addEventListener('mousedown', (e) => {
 canvas.addEventListener('mouseup', () => {
     cursor.active = false;
     currentLine = null;
-    if (cursorChangedShape == true) {
-        cursorCommand.shape = cursorHolder.shape;
-    }
-  
     canvas.dispatchEvent(drawingChangedEvent);
   });
 
 canvas.addEventListener('mouseenter', (e) => {
+    cursorCommand = new cursorShape(cursorCommand.shape, e.offsetX, e.offsetY);
+    canvas.style.cursor = 'none';
+    canvas.dispatchEvent(drawingChangedEvent);
     canvas.style.cursor = 'none';
     canvas.dispatchEvent(drawingChangedEvent);
 });
@@ -128,12 +180,10 @@ canvas.addEventListener('mouseout', () => {
 canvas.addEventListener('mousemove', (e) => {
     const cursorX = e.offsetX;
     const cursorY = e.offsetY;
-    if (cursorChangedShape) {
-        cursorCommand = new cursorShape(cursorCommand.shape, cursorX, cursorY);
-    } else {
-        cursorCommand = new cursorShape('.', cursorX, cursorY);
-    }
 
+    console.log(`The shape is ${cursorCommand.shape} in mousemove`);
+    cursorCommand = new cursorShape(cursorCommand.shape, cursorX, cursorY);
+    console.log(`The ACTUAL shape is ${cursorCommand.shape} in mousemove`);
     if (cursor.active && currentLine) {
        currentLine.points.push({ x: cursorX, y: cursorY });
     }
@@ -145,56 +195,13 @@ canvas.addEventListener('mousemove', (e) => {
 const drawingChangedEvent = new Event('drawing-changed');
 
 canvas.addEventListener('drawing-changed', () => {
-    drawingContext.clearRect(0, 0, canvas.width, canvas.height);
-    for (const line of lines) {
-        line.display(drawingContext);
-    }
-
-    if (cursorCommand) {
+    if (drawingContext) {
+        drawingContext.clearRect(0, 0, canvas.width, canvas.height);
+        lines.forEach(line => line.display(drawingContext));
         cursorCommand.execute();
     }
 });
 
-interface buttons {
-    label: string;
-    onClick: () => void;
-}
-
-const buttonTypes: Array<buttons> = [
-    { label: 'Clear', onClick: clearCanvas },
-    { label: 'Undo', onClick: undo},
-    { label: 'Redo', onClick: redo},
-    { label: 'Thin', onClick: thin},
-    { label: 'Thick', onClick: thick},
-    { label: '👻', onClick: toolMoved('👻')},
-    {label: '🐈‍⬛', onClick: toolMoved('🐈‍⬛')},
-    {label:'🌕', onClick: toolMoved('🌕')},
-];
-
-function toolMoved(shape:string) {
-   return function() {
-        if (cursorCommand.shape === shape) {
-            cursorChangedShape = false;
-            cursorCommand.shape = '.';
-        }else{    
-            cursorChangedShape = true;
-            cursorCommand.shape = shape;
-        }
-        canvas.dispatchEvent(drawingChangedEvent);
-    }
-}
-
-function createButton(buttonType: buttons) {
-    const button = document.createElement('button');
-    button.innerHTML = buttonType.label;
-    button.addEventListener('click', buttonType.onClick);
-    app.appendChild(button);
-    return button;
-}
-
-for (const buttonType of buttonTypes) {
-    createButton(buttonType);
-}
 
 function clearCanvas() {
     lines.splice(0, lines.length);
