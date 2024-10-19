@@ -82,7 +82,6 @@ class cursorShape implements Command{
 
     execute(): void {
         if (drawingContext) {
-            //console.log(`${this.shape} is the shape in execute`);
             drawingContext.font = (this.thickness*10) + "px Arial";
             drawingContext.fillStyle = "black";
             drawingContext.fillText(this.shape, this.x-4, this.y)
@@ -135,9 +134,7 @@ stickerButtonTypes.forEach(buttonType => {
 });
 
 function toolMoved(shape: string) {
-    console.log(`${shape} is the shape in toolMoved`);
     cursorCommand.shape = shape;
-    console.log(`${cursorCommand.shape} is the ACTUAL shape in toolMoved`);
  }
 
 let cursorCommand:cursorShape = new cursorShape('.', 0, 0);
@@ -146,7 +143,6 @@ canvas.addEventListener('mousedown', (e) => {
   cursor.active = true;
   cursor.x = e.offsetX;
   cursor.y = e.offsetY;
-    console.log(cursorCommand.shape);
 
     if (cursor.active && cursorCommand.shape != ' ') {
         currentLine = new Line();
@@ -181,9 +177,7 @@ canvas.addEventListener('mousemove', (e) => {
     const cursorX = e.offsetX;
     const cursorY = e.offsetY;
 
-    console.log(`The shape is ${cursorCommand.shape} in mousemove`);
     cursorCommand = new cursorShape(cursorCommand.shape, cursorX, cursorY);
-    console.log(`The ACTUAL shape is ${cursorCommand.shape} in mousemove`);
     if (cursor.active && currentLine) {
        currentLine.points.push({ x: cursorX, y: cursorY });
     }
