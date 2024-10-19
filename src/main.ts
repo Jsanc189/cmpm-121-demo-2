@@ -163,13 +163,10 @@ canvas.addEventListener('mouseenter', (e) => {
     cursorCommand = new cursorShape(cursorCommand.shape, e.offsetX, e.offsetY);
     canvas.style.cursor = 'none';
     canvas.dispatchEvent(drawingChangedEvent);
-    canvas.style.cursor = 'none';
-    canvas.dispatchEvent(drawingChangedEvent);
 });
 
 canvas.addEventListener('mouseout', () => {
     canvas.style.cursor = 'default';
-    cursorCommand = new cursorShape(' ', 0, 0);
     canvas.dispatchEvent(drawingChangedEvent);
 })
 
@@ -178,6 +175,9 @@ canvas.addEventListener('mousemove', (e) => {
     const cursorY = e.offsetY;
 
     cursorCommand = new cursorShape(cursorCommand.shape, cursorX, cursorY);
+    cursorCommand.thickness = lineThickness;
+
+    
     if (cursor.active && currentLine) {
        currentLine.points.push({ x: cursorX, y: cursorY });
     }
