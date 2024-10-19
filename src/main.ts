@@ -231,6 +231,6 @@ function thick() {
 function customSticker() {
     let text:string = prompt("Custom sticker text");
     emojis.push(text);
-    createButton({label: text, onClick: ()=> toolMoved})  
+    createButton({label: text, onClick: ()=> toolMoved(text)})  
 }
 
