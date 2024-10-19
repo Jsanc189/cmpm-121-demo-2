@@ -103,6 +103,7 @@ const buttonTypes: Array<buttons> = [
     { label: 'Thin', onClick: thin},
     { label: 'Thick', onClick: thick},
     { label: 'Custom Sticker', onClick: customSticker},
+    { label: 'Export', onClick: exportCanvas},
 ];
 
 
@@ -232,5 +233,23 @@ function customSticker() {
     let text:string = prompt("Custom sticker text");
     emojis.push(text);
     createButton({label: text, onClick: ()=> toolMoved(text)})  
+}
+
+function exportCanvas() {
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = 1024;
+    exportCanvas.height = 1024;
+    
+    let exportCanvasContext = exportCanvas.getContext('2d');
+    if (exportCanvasContext && drawingContext) {
+        exportCanvasContext.drawImage(canvas, 0, 0, exportCanvas.width, exportCanvas.height);
+        exportCanvasContext.scale(4,4);
+    }
+
+    const link = document.createElement('a');
+    link.href = exportCanvas.toDataURL('image/png');
+    link.download = 'drawing.png';
+    link.click();
+
 }
 
