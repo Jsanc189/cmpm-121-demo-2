@@ -21,7 +21,7 @@ const div = document.createElement('div');
 div.style.height = '20px';
 app.appendChild(div);
 
-const drawingContext: CanvasRenderingContext2D | null = canvas.getContext('2d');
+const drawingContext: CanvasRenderingContext2D = canvas.getContext('2d');
 
 const lines: Array<Line> = [];
 const redoLines: Array<Line> = [];
@@ -29,8 +29,9 @@ let currentLine: Line | null = null;
 
 const startingX:number = 0;
 const startingY:number = 0;
-const sizeFactor:number = 10
-
+const sizeFactor:number = 10;
+const colors: Array<string> = ["black", "red", "blue", "green", "yellow", "orange", "purple", "pink", "brown", "gray"];
+const rotationDegrees: Array<number> = [0, 90, 180, 270];
 const cursor = { active: false, x: startingX, y: startingY };
 
 interface Displayable {
@@ -38,16 +39,22 @@ interface Displayable {
 };
 
 let lineThickness:number = 3;
+let currentColorIndex:number = 0;
+let currentRotationIndex: number = 0;
 
 class Line implements Displayable {
     public points: Array<{ x: number; y: number }>;
     public thickness:number;
     public character:string;
+    public color: string;
+    public rotation: number;
     
     constructor() {
         this.points = [];
         this.thickness = lineThickness;
         this.character = cursorCommand.shape;
+        this.color = colors[currentColorIndex];
+        this.rotation = rotationDegrees[currentRotationIndex];
     }
 
     display(context: CanvasRenderingContext2D): void {
@@ -58,6 +65,8 @@ class Line implements Displayable {
         context.moveTo(x, y);
         for (const { x, y } of this.points) {
             context.font = (this.thickness * sizeFactor) + "px Arial";
+            context.fillStyle = this.color;
+            
           context.fillText(this.character, x-4, y);
         }
         context.stroke();
@@ -87,7 +96,7 @@ class cursorShape implements Command{
     execute(): void {
         if (drawingContext) {
             drawingContext.font = (this.thickness * sizeFactor) + "px Arial";
-            drawingContext.fillStyle = "black";
+            drawingContext.fillStyle = colors[currentColorIndex];
             drawingContext.fillText(this.shape, this.x-4, this.y)
         }
     }
@@ -140,7 +149,17 @@ stickerButtonTypes.forEach(buttonType => {
 
 function toolMoved(shape: string) {
     cursorCommand.shape = shape;
+    currentRotationIndex = (currentRotationIndex + 1) % rotationDegrees.length;
+    rotateText(cursorCommand.shape, cursor.x, cursor.y, rotationDegrees[currentRotationIndex]);
  }
+
+function rotateText(text: string, x: number, y: number, angle: number) {
+    drawingContext.save();
+    drawingContext.translate(x, y);
+    drawingContext.rotate(angle * Math.PI / 180);
+    drawingContext.fillText(text, 0, 0);
+    drawingContext.restore();
+}
 
 let cursorCommand:cursorShape = new cursorShape('.', startingX, startingY);
 
@@ -227,6 +246,7 @@ function redo() {
 
 function canvasMarker() {
     cursorCommand.shape = '.';
+    currentColorIndex = (currentColorIndex + 1) % colors.length;
 }
 
 function thin() {
