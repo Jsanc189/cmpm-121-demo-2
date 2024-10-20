@@ -197,7 +197,7 @@ canvas.addEventListener('mousemove', (e) => {
     const cursorX = e.offsetX;
     const cursorY = e.offsetY;
 
-    cursorCommand = new cursorShape(cursorCommand.shape, cursorX, cursorY);
+    cursorCommand = new cursorShape(cursorCommand.shape, e.offsetX, e.offsetY);
     cursorCommand.thickness = lineThickness;
     
     if (cursor.active && currentLine) {
@@ -248,6 +248,7 @@ function canvasMarker() {
     currentColorIndex = (currentColorIndex + 1) % colors.length;
     console.log(currentRotationIndex);
 }
+
 
 function thin() {
     if (lineThickness > 1){
