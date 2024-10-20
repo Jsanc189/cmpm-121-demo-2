@@ -66,8 +66,7 @@ class Line implements Displayable {
         for (const { x, y } of this.points) {
             context.font = (this.thickness * sizeFactor) + "px Arial";
             context.fillStyle = this.color;
-            
-          context.fillText(this.character, x-4, y);
+            rotateText(this.character, x, y, this.rotation);
         }
         context.stroke();
       }
@@ -97,7 +96,7 @@ class cursorShape implements Command{
         if (drawingContext) {
             drawingContext.font = (this.thickness * sizeFactor) + "px Arial";
             drawingContext.fillStyle = colors[currentColorIndex];
-            drawingContext.fillText(this.shape, this.x-4, this.y)
+            rotateText(this.shape, this.x, this.y, rotationDegrees[currentRotationIndex]);
         }
     }
 
@@ -200,7 +199,6 @@ canvas.addEventListener('mousemove', (e) => {
 
     cursorCommand = new cursorShape(cursorCommand.shape, cursorX, cursorY);
     cursorCommand.thickness = lineThickness;
-
     
     if (cursor.active && currentLine) {
        currentLine.points.push({ x: cursorX, y: cursorY });
