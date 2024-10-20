@@ -40,7 +40,7 @@ interface Displayable {
 
 let lineThickness:number = 3;
 let currentColorIndex:number = 0;
-let currentRotationIndex: number = 0;
+let currentRotationIndex: number = 3;
 
 class Line implements Displayable {
     public points: Array<{ x: number; y: number }>;
@@ -244,7 +244,9 @@ function redo() {
 
 function canvasMarker() {
     cursorCommand.shape = '.';
+    console.log(currentRotationIndex);
     currentColorIndex = (currentColorIndex + 1) % colors.length;
+    console.log(currentRotationIndex);
 }
 
 function thin() {
