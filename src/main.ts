@@ -32,7 +32,6 @@ const startingY:number = 0;
 const sizeFactor:number = 10;
 const colors: Array<string> = ["black", "red", "blue", "green", "yellow", "orange", "purple", "pink", "brown", "gray"];
 const rotationDegrees: Array<number> = [0, 90, 180, 270];
-const cursor = { active: false, x: startingX, y: startingY };
 
 interface Displayable {
     display(context: CanvasRenderingContext2D): void;
@@ -66,39 +65,80 @@ class Line implements Displayable {
         for (const { x, y } of this.points) {
             context.font = (this.thickness * sizeFactor) + "px Arial";
             context.fillStyle = this.color;
-            rotateText(this.character, x, y, this.rotation);
+            rotateSticker(this.character, x, y, this.rotation);
         }
         context.stroke();
       }
     }
 } 
 
-interface Command {
-    execute(): void;
+const drawingChangedEvent = new Event('drawing-changed');
+
+canvas.addEventListener('drawing-changed', () => {
+    if (drawingContext) {
+        drawingContext.clearRect(startingX, startingY, canvas.width, canvas.height);
+        lines.forEach(line => line.display(drawingContext));
+        cursorCommand.execute();
+    }
+});
+
+
+function clearCanvas() {
+    lines.splice(0, lines.length);
+    redoLines.splice(0, redoLines.length);
+    canvas.dispatchEvent(drawingChangedEvent);
 }
 
-class cursorShape implements Command{  
-    private context: CanvasRenderingContext2D | null;
-    public shape:string;
-    public thickness:number;
-    public x:number;
-    public y:number;
+function undo() {
+    if (lines.length > 0) {
+        const lastLine = lines.pop()!;
+        redoLines.push(lastLine);
+        canvas.dispatchEvent(drawingChangedEvent);
+    }
+}
 
-    constructor(shape: string, x:number, y:number) {
-        this.context = drawingContext;
-        this.shape = shape;
-        this.thickness = lineThickness;
-        this.x = x;
-        this.y = y;
+function redo() {
+    if (redoLines.length > 0) {
+        const lineToRedo = redoLines.pop()!;
+        lines.push(lineToRedo);
+        canvas.dispatchEvent(drawingChangedEvent);
     }
 
-    execute(): void {
-        if (drawingContext) {
-            drawingContext.font = (this.thickness * sizeFactor) + "px Arial";
-            drawingContext.fillStyle = colors[currentColorIndex];
-            rotateText(this.shape, this.x, this.y, rotationDegrees[currentRotationIndex]);
-        }
+}
+
+function canvasMarker() {
+    cursorCommand.shape = '.';
+    currentColorIndex = (currentColorIndex + 1) % colors.length;
+}
+
+
+function thin() {
+    if (lineThickness > 1){
+        lineThickness -= 1;
     }
+}
+
+function thick() {
+    lineThickness += 1;
+}
+
+
+//export canvas to save file
+function exportCanvas() {
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = 1024;
+    exportCanvas.height = 1024;
+    
+    const exportCanvasContext = exportCanvas.getContext('2d');
+    if (exportCanvasContext && drawingContext) {
+        exportCanvasContext.drawImage(canvas, startingX, startingY, exportCanvas.width, exportCanvas.height);
+        exportCanvasContext.scale(4,4);
+    }
+
+    const link = document.createElement('a');
+    link.href = exportCanvas.toDataURL('image/png');
+    link.download = 'drawing.png';
+    link.click();
 
 }
 
@@ -149,15 +189,52 @@ stickerButtonTypes.forEach(buttonType => {
 function toolMoved(shape: string) {
     cursorCommand.shape = shape;
     currentRotationIndex = (currentRotationIndex + 1) % rotationDegrees.length;
-    rotateText(cursorCommand.shape, cursor.x, cursor.y, rotationDegrees[currentRotationIndex]);
+    rotateSticker(cursorCommand.shape, cursor.x, cursor.y, rotationDegrees[currentRotationIndex]);
  }
 
-function rotateText(text: string, x: number, y: number, angle: number) {
+function rotateSticker(text: string, x: number, y: number, angle: number) {
     drawingContext.save();
     drawingContext.translate(x, y);
     drawingContext.rotate(angle * Math.PI / 180);
     drawingContext.fillText(text, 0, 0);
     drawingContext.restore();
+}
+
+function customSticker() {
+    const text:string = prompt("Custom sticker text");
+    emojis.push(text);
+    createButton({label: text, onClick: ()=> toolMoved(text)})  
+}
+
+const cursor = { active: false, x: startingX, y: startingY };
+
+interface Command {
+    execute(): void;
+}
+
+class cursorShape implements Command{  
+    private context: CanvasRenderingContext2D | null;
+    public shape:string;
+    public thickness:number;
+    public x:number;
+    public y:number;
+
+    constructor(shape: string, x:number, y:number) {
+        this.context = drawingContext;
+        this.shape = shape;
+        this.thickness = lineThickness;
+        this.x = x;
+        this.y = y;
+    }
+
+    execute(): void {
+        if (drawingContext) {
+            drawingContext.font = (this.thickness * sizeFactor) + "px Arial";
+            drawingContext.fillStyle = colors[currentColorIndex];
+            rotateSticker(this.shape, this.x, this.y, rotationDegrees[currentRotationIndex]);
+        }
+    }
+
 }
 
 let cursorCommand:cursorShape = new cursorShape('.', startingX, startingY);
@@ -206,81 +283,3 @@ canvas.addEventListener('mousemove', (e) => {
     canvas.dispatchEvent(drawingChangedEvent);
      
 });
-
-
-const drawingChangedEvent = new Event('drawing-changed');
-
-canvas.addEventListener('drawing-changed', () => {
-    if (drawingContext) {
-        drawingContext.clearRect(startingX, startingY, canvas.width, canvas.height);
-        lines.forEach(line => line.display(drawingContext));
-        cursorCommand.execute();
-    }
-});
-
-
-function clearCanvas() {
-    lines.splice(0, lines.length);
-    redoLines.splice(0, redoLines.length);
-    canvas.dispatchEvent(drawingChangedEvent);
-}
-
-function undo() {
-    if (lines.length > 0) {
-        const lastLine = lines.pop()!;
-        redoLines.push(lastLine);
-        canvas.dispatchEvent(drawingChangedEvent);
-    }
-}
-
-function redo() {
-    if (redoLines.length > 0) {
-        const lineToRedo = redoLines.pop()!;
-        lines.push(lineToRedo);
-        canvas.dispatchEvent(drawingChangedEvent);
-    }
-
-}
-
-function canvasMarker() {
-    cursorCommand.shape = '.';
-    console.log(currentRotationIndex);
-    currentColorIndex = (currentColorIndex + 1) % colors.length;
-    console.log(currentRotationIndex);
-}
-
-
-function thin() {
-    if (lineThickness > 1){
-        lineThickness -= 1;
-    }
-}
-
-function thick() {
-    lineThickness += 1;
-}
-
-function customSticker() {
-    const text:string = prompt("Custom sticker text");
-    emojis.push(text);
-    createButton({label: text, onClick: ()=> toolMoved(text)})  
-}
-
-function exportCanvas() {
-    const exportCanvas = document.createElement('canvas');
-    exportCanvas.width = 1024;
-    exportCanvas.height = 1024;
-    
-    const exportCanvasContext = exportCanvas.getContext('2d');
-    if (exportCanvasContext && drawingContext) {
-        exportCanvasContext.drawImage(canvas, startingX, startingY, exportCanvas.width, exportCanvas.height);
-        exportCanvasContext.scale(4,4);
-    }
-
-    const link = document.createElement('a');
-    link.href = exportCanvas.toDataURL('image/png');
-    link.download = 'drawing.png';
-    link.click();
-
-}
-
