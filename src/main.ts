@@ -10,18 +10,42 @@ header.innerHTML = APP_NAME;
 header.style.fontSize = "50px";
 app.append(header);
 
+//L: Divs for sidebar display.
+const mainDiv = document.createElement('div');
+mainDiv.id = 'mainDiv'
+const canvasDiv = document.createElement('div');
+const controlsDiv = document.createElement('div');
+app.append(mainDiv)
+mainDiv.append(canvasDiv)
+mainDiv.append(controlsDiv)
+
 const canvas = document.createElement('canvas');
 canvas.width = 256;
 canvas.height = 256;
 canvas.id = `canvas`;
-app.appendChild(canvas);
+canvasDiv.appendChild(canvas);
 
+//L: Changed general div into multiple, separate boxes.
+const commandDiv = document.createElement('div');
+const commandH3 = document.createElement('h3');
+commandH3.innerHTML = 'Commands'
+commandDiv.append(commandH3);
 
-const div = document.createElement('div');
-div.style.height = '20px';
-app.appendChild(div);
+const markerDiv = document.createElement('div');
+const markerH3 = document.createElement('h3')
+markerH3.innerHTML = 'Markers'
+markerDiv.append(markerH3);
 
-const drawingContext: CanvasRenderingContext2D = canvas.getContext('2d');
+const stickerDiv = document.createElement('div');
+const stickerH3 = document.createElement('h3');
+stickerH3.innerHTML = 'Stickers'
+stickerDiv.append(stickerH3);
+
+controlsDiv.append(commandDiv);
+controlsDiv.append(markerDiv);
+controlsDiv.append(stickerDiv);
+
+const drawingContext: CanvasRenderingContext2D = canvas.getContext('2d')!;
 
 const lines: Array<Line> = [];
 const redoLines: Array<Line> = [];
@@ -146,17 +170,18 @@ function exportCanvas() {
 interface buttons {
     label: string;
     onClick: () => void;
+    box: HTMLDivElement;
 }
 
 const buttonTypes: Array<buttons> = [
-    { label: 'Clear', onClick: clearCanvas },
-    { label: 'Undo', onClick: undo},
-    { label: 'Redo', onClick: redo},
-    { label: 'Marker', onClick: canvasMarker},
-    { label: 'Thin', onClick: thin},
-    { label: 'Thick', onClick: thick},
-    { label: 'Export', onClick: exportCanvas},
-    { label: 'Custom Sticker', onClick: customSticker},
+    { label: 'Clear', onClick: clearCanvas, box: commandDiv },
+    { label: 'Undo', onClick: undo, box: commandDiv },
+    { label: 'Redo', onClick: redo, box: commandDiv },
+    { label: 'Marker', onClick: canvasMarker, box: markerDiv },
+    { label: 'Thin', onClick: thin, box: markerDiv },
+    { label: 'Thick', onClick: thick, box: markerDiv },
+    { label: 'Export', onClick: exportCanvas, box: commandDiv },
+    { label: 'Custom Sticker', onClick: customSticker, box: stickerDiv },
 
 ];
 
@@ -166,7 +191,7 @@ function createButton(buttonType: buttons) {
     const button = document.createElement('button');
     button.innerHTML = buttonType.label;
     button.addEventListener('click', buttonType.onClick);
-    app.appendChild(button);
+    buttonType.box.append(button);
     return button;
 }
 
@@ -178,7 +203,8 @@ const emojis: Array<string> = ['👻', '🐈‍⬛', '🌕'];
 
 const stickerButtonTypes = emojis.map(emoji => ({
     label: emoji,
-     onClick: () => toolMoved(emoji),
+    onClick: () => toolMoved(emoji),
+    box: stickerDiv
 }))
 
 
@@ -201,9 +227,9 @@ function rotateSticker(text: string, x: number, y: number, angle: number) {
 }
 
 function customSticker() {
-    const text:string = prompt("Custom sticker text");
+    const text:string = prompt("Custom sticker text")!;
     emojis.push(text);
-    createButton({label: text, onClick: ()=> toolMoved(text)})  
+    createButton({label: text, onClick: ()=> toolMoved(text), box: stickerDiv})  
 }
 
 const cursor = { active: false, x: startingX, y: startingY };
