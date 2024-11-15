@@ -57,22 +57,24 @@ const sizeFactor:number = 10;
 const colors: Array<string> = ["black", "red", "blue", "green", "yellow", "orange", "purple", "pink", "brown", "gray"];
 const rotationDegrees: Array<number> = [0, 90, 180, 270];
 
-interface Displayable {
-    display(context: CanvasRenderingContext2D): void;
-};
-
 let lineThickness:number = 3;
 let currentColorIndex:number = 0;
 let currentRotationIndex: number = 3;
 
-class Line implements Displayable {
+interface Command {
+    execute(ctx: CanvasRenderingContext2D): void;
+}
+
+class Line implements Command {
+    public ctx: CanvasRenderingContext2D;
     public points: Array<{ x: number; y: number }>;
     public thickness:number;
     public character:string;
     public color: string;
     public rotation: number;
     
-    constructor() {
+    constructor(ctx: CanvasRenderingContext2D) {
+        this.ctx = ctx;
         this.points = [];
         this.thickness = lineThickness;
         this.character = cursorCommand.shape;
@@ -80,29 +82,54 @@ class Line implements Displayable {
         this.rotation = rotationDegrees[currentRotationIndex];
     }
 
-    display(context: CanvasRenderingContext2D): void {
+    execute(ctx: CanvasRenderingContext2D): void {
       if (this.points.length >= 1) {
-        context.lineWidth = this.thickness;
-        context.beginPath();
+        ctx.lineWidth = this.thickness;
+        ctx.beginPath();
         const { x, y } = this.points[0];
-        context.moveTo(x, y);
+        ctx.moveTo(x, y);
         for (const { x, y } of this.points) {
-            context.font = (this.thickness * sizeFactor) + "px Arial";
-            context.fillStyle = this.color;
+            ctx.font = (this.thickness * sizeFactor) + "px Arial";
+            ctx.fillStyle = this.color;
             rotateSticker(this.character, x, y, this.rotation);
         }
-        context.stroke();
+        ctx.stroke();
       }
     }
-} 
+}
+
+class cursorShape implements Command{  
+    private ctx: CanvasRenderingContext2D | null;
+    public shape:string;
+    public thickness:number;
+    public x:number;
+    public y:number;
+
+    constructor(ctx: CanvasRenderingContext2D, shape: string, x:number, y:number) {
+        this.ctx = ctx;
+        this.shape = shape;
+        this.thickness = lineThickness;
+        this.x = x;
+        this.y = y;
+    }
+
+    execute(ctx: CanvasRenderingContext2D): void {
+        if (ctx) {
+            ctx.font = (this.thickness * sizeFactor) + "px Arial";
+            ctx.fillStyle = colors[currentColorIndex];
+            rotateSticker(this.shape, this.x, this.y, rotationDegrees[currentRotationIndex]);
+        }
+    }
+
+}
 
 const drawingChangedEvent = new Event('drawing-changed');
 
 canvas.addEventListener('drawing-changed', () => {
     if (drawingContext) {
         drawingContext.clearRect(startingX, startingY, canvas.width, canvas.height);
-        lines.forEach(line => line.display(drawingContext));
-        cursorCommand.execute();
+        lines.forEach(line => line.execute(drawingContext));
+        cursorCommand.execute(drawingContext);
     }
 });
 
@@ -234,36 +261,7 @@ function customSticker() {
 
 const cursor = { active: false, x: startingX, y: startingY };
 
-interface Command {
-    execute(): void;
-}
-
-class cursorShape implements Command{  
-    private context: CanvasRenderingContext2D | null;
-    public shape:string;
-    public thickness:number;
-    public x:number;
-    public y:number;
-
-    constructor(shape: string, x:number, y:number) {
-        this.context = drawingContext;
-        this.shape = shape;
-        this.thickness = lineThickness;
-        this.x = x;
-        this.y = y;
-    }
-
-    execute(): void {
-        if (drawingContext) {
-            drawingContext.font = (this.thickness * sizeFactor) + "px Arial";
-            drawingContext.fillStyle = colors[currentColorIndex];
-            rotateSticker(this.shape, this.x, this.y, rotationDegrees[currentRotationIndex]);
-        }
-    }
-
-}
-
-let cursorCommand:cursorShape = new cursorShape('.', startingX, startingY);
+let cursorCommand:cursorShape = new cursorShape(drawingContext, '.', startingX, startingY);
 
 canvas.addEventListener('mousedown', (e) => {
   cursor.active = true;
@@ -271,7 +269,7 @@ canvas.addEventListener('mousedown', (e) => {
   cursor.y = e.offsetY;
 
     if (cursor.active && cursorCommand.shape != ' ') {
-        currentLine = new Line();
+        currentLine = new Line(drawingContext);
         currentLine.points.push({ x: cursor.x, y: cursor.y });
         lines.push(currentLine);
     }
@@ -286,7 +284,7 @@ canvas.addEventListener('mouseup', () => {
   });
 
 canvas.addEventListener('mouseenter', (e) => {
-    cursorCommand = new cursorShape(cursorCommand.shape, e.offsetX, e.offsetY);
+    cursorCommand = new cursorShape(drawingContext, cursorCommand.shape, e.offsetX, e.offsetY);
     canvas.style.cursor = 'none';
     canvas.dispatchEvent(drawingChangedEvent);
 });
@@ -300,7 +298,7 @@ canvas.addEventListener('mousemove', (e) => {
     const cursorX = e.offsetX;
     const cursorY = e.offsetY;
 
-    cursorCommand = new cursorShape(cursorCommand.shape, e.offsetX, e.offsetY);
+    cursorCommand = new cursorShape(drawingContext, cursorCommand.shape, e.offsetX, e.offsetY);
     cursorCommand.thickness = lineThickness;
     
     if (cursor.active && currentLine) {
